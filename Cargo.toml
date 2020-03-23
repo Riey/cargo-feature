@@ -4,6 +4,10 @@ description = "Allows conveniently modify features of crate"
 version = "0.1.0"
 authors = ["Riey <creeper844@gmail.com>"]
 edition = "2018"
+license = "MIT"
+homepage = "https://github.com/Riey/cargo-feature"
+repository = "https://github.com/Riey/cargo-feature"
+documentation = "https://docs.rs/cargo-feature"
 
 [dependencies]
 structopt = "0.3.12"
