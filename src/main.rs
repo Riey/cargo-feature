@@ -13,25 +13,16 @@ struct Command {
     features: Vec<String>,
 }
 
-#[derive(StructOpt)]
-#[structopt(about = "command target")]
-struct CommandTarget {
-    #[structopt(
-        name = "build-dependency",
-        short = "b",
-        long,
-        about = "Include build-dependency"
-    )]
-    build: bool,
-    #[structopt(
-        name = "dev-dependency",
-        short = "d",
-        long,
-        about = "Include dev-dependency"
-    )]
-    dev: bool,
-    #[structopt(name = "dependency", short = "n", long, about = "Include dependency")]
-    normal: bool,
+#[derive(Eq, PartialEq)]
+enum DependencyType {
+    Normal,
+    Build,
+    Dev,
+}
+
+enum DependencyCommand {
+    Add,
+    Remove,
 }
 
 #[derive(StructOpt)]
@@ -48,33 +39,49 @@ struct Opt {
     preview: bool,
 
     #[structopt(flatten)]
-    target: CommandTarget,
-
-    #[structopt(flatten)]
     command: Command,
 }
 
-fn try_process_dependency(doc: &mut Document, target: CommandTarget, func: impl Fn(&mut Item)) {
+fn try_process_dependency(doc: &mut Document, func: impl Fn(&mut Item, DependencyType)) {
     macro_rules! try_find {
-        ($key:expr) => {
+        ($key:expr, $ty:expr) => {
             let item = doc.as_table_mut().entry($key);
             if !item.is_none() {
-                func(item);
+                func(item, $ty);
             }
         };
     }
 
-    if target.normal {
-        try_find!("dependencies");
-    }
+    try_find!("dependencies", DependencyType::Normal);
+    try_find!("build-dependencies", DependencyType::Normal);
+    try_find!("dev-dependencies", DependencyType::Normal);
+}
 
-    if target.build {
-        try_find!("build-dependencies");
-    }
+fn parse_feature(mut feature: &str) -> (DependencyType, DependencyCommand, &str) {
+    let ty = if feature.starts_with(&['+', '-'][..]) {
+        DependencyType::Normal
+    } else {
+        let (ty, other) = feature.split_at(1);
+        feature = other;
+        match ty {
+            "b" => DependencyType::Build,
+            "d" => DependencyType::Dev,
+            "n" => DependencyType::Normal,
+            _ => panic!("Unknown dependenty type: {}", ty),
+        }
+    };
 
-    if target.dev {
-        try_find!("dev-dependencies");
-    }
+    let command = {
+        let (command, other) = feature.split_at(1);
+        feature = other;
+        match command {
+            "+" => DependencyCommand::Add,
+            "-" => DependencyCommand::Remove,
+            _ => panic!("Unknown command: {}", command),
+        }
+    };
+
+    (ty, command, feature)
 }
 
 fn find_feature(feature: &str) -> impl Fn(&Value) -> bool + '_ {
@@ -94,7 +101,7 @@ fn main() {
 
     let mut document = Document::from_str(&manifest).expect("Parse Cargo.toml");
 
-    try_process_dependency(&mut document, opt.target, |item| {
+    try_process_dependency(&mut document, |item, dep_ty| {
         let dependencies_table = item.as_table_mut().expect("dependencies is not table");
 
         let dep = dependencies_table.entry(&command.krate);
@@ -125,25 +132,27 @@ fn main() {
         let features = features.expect("features array");
 
         for feature in command.features.iter() {
-            let (prefix, feature) = feature.split_at(1);
-            let is_add = match prefix {
-                "+" => true,
-                "-" => false,
-                _ => panic!("Invalid prefix {}", prefix),
-            };
+            let (ty, command, feature) = parse_feature(feature);
+
+            if dep_ty != ty {
+                continue;
+            }
 
             let finder = find_feature(feature);
-            if is_add {
-                if !features.iter().any(finder) {
-                    features.push(feature.clone());
-                    features.fmt();
+            match command {
+                DependencyCommand::Add => {
+                    if !features.iter().any(finder) {
+                        features.push(feature.clone());
+                        features.fmt();
+                    }
                 }
-            } else {
-                let pos = features.iter().position(finder);
+                DependencyCommand::Remove => {
+                    let pos = features.iter().position(finder);
 
-                if let Some(pos) = pos {
-                    features.remove(pos);
-                    features.fmt();
+                    if let Some(pos) = pos {
+                        features.remove(pos);
+                        features.fmt();
+                    }
                 }
             }
         }
