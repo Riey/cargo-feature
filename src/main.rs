@@ -58,6 +58,13 @@ struct Opt {
     #[structopt(long = "manifest-path", parse(from_os_str))]
     manifest_path: Option<PathBuf>,
 
+    #[structopt(
+        short = "p",
+        long,
+        about = "Don't write manifest file just print to stdout"
+    )]
+    preview: bool,
+
     #[structopt(flatten)]
     target: CommandTarget,
 
@@ -166,7 +173,11 @@ fn main() {
         }
     });
 
-    let mut file = std::fs::File::create(manifest_path).expect("Create manifest");
-    write!(file, "{}", document).expect("Write manifest");
-    file.flush().expect("Flush manifest");
+    if opt.preview {
+        println!("{}", document);
+    } else {
+        let mut file = std::fs::File::create(manifest_path).expect("Create manifest");
+        write!(file, "{}", document).expect("Write manifest");
+        file.flush().expect("Flush manifest");
+    }
 }
