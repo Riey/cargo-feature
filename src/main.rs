@@ -1,5 +1,7 @@
 use structopt::StructOpt;
 
+use ansi_term::Color;
+use pad::PadStr;
 use std::io::Write;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -37,6 +39,9 @@ struct Opt {
         about = "Don't write manifest file just print to stdout"
     )]
     preview: bool,
+
+    #[structopt(short = "i", long, about = "Don't print progress output")]
+    ignore_progress: bool,
 
     #[structopt(flatten)]
     command: Command,
@@ -92,6 +97,7 @@ fn main() {
     let opt: Opt = Opt::from_args();
 
     let command = opt.command;
+    let ignore_progress = opt.ignore_progress;
 
     let manifest_path = opt
         .manifest_path
@@ -132,16 +138,26 @@ fn main() {
         let features = features.expect("features array");
 
         for feature in command.features.iter() {
-            let (ty, command, feature) = parse_feature(feature);
+            let (ty, dep_command, feature) = parse_feature(feature);
 
             if dep_ty != ty {
                 continue;
             }
 
             let finder = find_feature(feature);
-            match command {
+            match dep_command {
                 DependencyCommand::Add => {
                     if !features.iter().any(finder) {
+                        if !ignore_progress {
+                            println!(
+                                "{} feature {} to crate {}",
+                                Color::Green.bold().paint(
+                                    "Adding".pad_to_width_with_alignment(12, pad::Alignment::Right)
+                                ),
+                                feature,
+                                command.krate
+                            );
+                        }
                         features.push(feature.clone());
                         features.fmt();
                     }
@@ -150,6 +166,16 @@ fn main() {
                     let pos = features.iter().position(finder);
 
                     if let Some(pos) = pos {
+                        if !ignore_progress {
+                            println!(
+                                "{} feature {} to crate {}",
+                                Color::Green.bold().paint(
+                                    "Removing".pad_to_width_with_alignment(12, pad::Alignment::Right)
+                                ),
+                                feature,
+                                command.krate
+                            );
+                        }
                         features.remove(pos);
                         features.fmt();
                     }
