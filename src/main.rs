@@ -28,7 +28,6 @@ enum DependencyCommand {
 }
 
 #[derive(StructOpt)]
-#[structopt(bin_name = "cargo")]
 struct Opt {
     #[structopt(long = "manifest-path", parse(from_os_str))]
     manifest_path: Option<PathBuf>,
@@ -45,6 +44,13 @@ struct Opt {
 
     #[structopt(flatten)]
     command: Command,
+}
+
+#[derive(StructOpt)]
+#[structopt(bin_name = "cargo")]
+enum CargoOpt {
+    #[structopt(name = "feature")]
+    Feature(Opt),
 }
 
 fn try_process_dependency(doc: &mut Document, func: impl Fn(&mut Item, DependencyType)) {
@@ -94,7 +100,7 @@ fn find_feature(feature: &str) -> impl Fn(&Value) -> bool + '_ {
 }
 
 fn main() {
-    let opt: Opt = Opt::from_args();
+    let CargoOpt::Feature(opt) = CargoOpt::from_args();
 
     let command = opt.command;
     let ignore_progress = opt.ignore_progress;
@@ -170,7 +176,8 @@ fn main() {
                             println!(
                                 "{} feature {} to crate {}",
                                 Color::Green.bold().paint(
-                                    "Removing".pad_to_width_with_alignment(12, pad::Alignment::Right)
+                                    "Removing"
+                                        .pad_to_width_with_alignment(12, pad::Alignment::Right)
                                 ),
                                 feature,
                                 command.krate
@@ -180,6 +187,14 @@ fn main() {
                         features.fmt();
                     }
                 }
+            }
+        }
+
+        if features.is_empty() {
+            if let Some(table) = dep.as_table_mut() {
+                table.remove("features");
+            } else if let Some(table) = dep.as_inline_table_mut() {
+                table.remove("features");
             }
         }
 
