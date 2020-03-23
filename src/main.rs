@@ -5,26 +5,8 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use toml_edit::{Array, Document, InlineTable, Item, Value};
 
-enum CommandType {
-    Add,
-    Sub,
-}
-
-impl FromStr for CommandType {
-    type Err = String;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "add" | "+" => Ok(CommandType::Add),
-            "sub" | "-" => Ok(CommandType::Sub),
-            _ => Err(format!("Unknown command: {}", s)),
-        }
-    }
-}
-
 #[derive(StructOpt)]
 struct Command {
-    #[structopt(name = "command_type", parse(try_from_str))]
-    ty: CommandType,
     #[structopt(name = "crate")]
     krate: String,
     #[structopt(name = "features")]
@@ -143,21 +125,25 @@ fn main() {
         let features = features.expect("features array");
 
         for feature in command.features.iter() {
-            let finder = find_feature(feature);
-            match command.ty {
-                CommandType::Add => {
-                    if !features.iter().any(finder) {
-                        features.push(feature.clone());
-                        features.fmt();
-                    }
-                }
-                CommandType::Sub => {
-                    let pos = features.iter().position(finder);
+            let (prefix, feature) = feature.split_at(1);
+            let is_add = match prefix {
+                "+" => true,
+                "-" => false,
+                _ => panic!("Invalid prefix {}", prefix),
+            };
 
-                    if let Some(pos) = pos {
-                        features.remove(pos);
-                        features.fmt();
-                    }
+            let finder = find_feature(feature);
+            if is_add {
+                if !features.iter().any(finder) {
+                    features.push(feature.clone());
+                    features.fmt();
+                }
+            } else {
+                let pos = features.iter().position(finder);
+
+                if let Some(pos) = pos {
+                    features.remove(pos);
+                    features.fmt();
                 }
             }
         }
