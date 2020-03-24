@@ -115,7 +115,33 @@ fn main() {
         cmd.exec().expect("Run cargo-metadata")
     };
 
+    let package = metadata
+        .packages
+        .into_iter()
+        .find(|package| package.name == command.krate)
+        .expect("Get package metadata");
+
     let manifest = std::fs::read_to_string(&manifest_path).expect("Read Cargo.toml");
+
+    if command.features.is_empty() {
+        println!(
+            "{} features for {}",
+            Color::Cyan
+                .bold()
+                .paint("Avaliable".pad_to_width_with_alignment(12, pad::Alignment::Right)),
+            command.krate
+        );
+
+        for (feature, sub_features) in package.features {
+            println!(
+                "{}{:?}",
+                Color::Green.paint(feature),
+                sub_features
+            );
+        }
+
+        return;
+    }
 
     let mut document = Document::from_str(&manifest).expect("Parse Cargo.toml");
 
@@ -151,12 +177,6 @@ fn main() {
 
         for feature in command.features.iter() {
             let (ty, dep_command, feature) = parse_feature(feature);
-
-            let package = metadata
-                .packages
-                .iter()
-                .find(|package| package.name == command.krate)
-                .expect("Get metadata");
 
             if !package.features.contains_key(feature) {
                 if !ignore_progress {
