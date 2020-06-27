@@ -133,11 +133,7 @@ fn main() {
         );
 
         for (feature, sub_features) in package.features {
-            println!(
-                "{}{:?}",
-                Color::Green.paint(feature),
-                sub_features
-            );
+            println!("{}{:?}", Color::Green.paint(feature), sub_features);
         }
 
         return;
@@ -178,7 +174,12 @@ fn main() {
         for feature in command.features.iter() {
             let (ty, dep_command, feature) = parse_feature(feature);
 
-            if !package.features.contains_key(feature) {
+            if !package.features.contains_key(feature)
+                && !package
+                    .dependencies
+                    .iter()
+                    .any(|x| x.optional && x.name == feature)
+            {
                 if !ignore_progress {
                     eprintln!(
                         "{} crate {} don't have feature {}",
@@ -210,7 +211,7 @@ fn main() {
                                 command.krate
                             );
                         }
-                        features.push(feature.clone());
+                        features.push(feature).expect("different type found");
                         features.fmt();
                     }
                 }
