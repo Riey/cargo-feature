@@ -125,7 +125,7 @@ fn main() {
 
     if command.features.is_empty() {
         println!(
-            "{} features for {}",
+            "{} features for `{}`",
             Color::Cyan
                 .bold()
                 .paint("Avaliable".pad_to_width_with_alignment(12, pad::Alignment::Right)),
@@ -182,7 +182,7 @@ fn main() {
             {
                 if !ignore_progress {
                     eprintln!(
-                        "{} crate {} don't have feature {}",
+                        "{} crate `{}` don't have feature `{}`",
                         Color::Yellow.bold().paint(
                             "Skipping".pad_to_width_with_alignment(12, pad::Alignment::Right)
                         ),
@@ -203,7 +203,7 @@ fn main() {
                     if !features.iter().any(finder) {
                         if !ignore_progress {
                             println!(
-                                "{} feature {} to crate {}",
+                                "{} feature `{}` to crate `{}`",
                                 Color::Green.bold().paint(
                                     "Adding".pad_to_width_with_alignment(12, pad::Alignment::Right)
                                 ),
@@ -221,7 +221,7 @@ fn main() {
                     if let Some(pos) = pos {
                         if !ignore_progress {
                             println!(
-                                "{} feature {} to crate {}",
+                                "{} feature `{}` to crate `{}`",
                                 Color::Green.bold().paint(
                                     "Removing"
                                         .pad_to_width_with_alignment(12, pad::Alignment::Right)
