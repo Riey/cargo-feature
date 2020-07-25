@@ -9,17 +9,33 @@ use toml_edit::{Array, Document, InlineTable, Item, Value};
 
 #[derive(StructOpt)]
 struct Command {
-    #[structopt(name = "crate")]
+    #[structopt(name = "crate", help = "Target crate name")]
     krate: String,
-    #[structopt(name = "features")]
+    #[structopt(
+        name = "features",
+        help = "List of features you want to add or remove you must add + or - left of the feature name"
+    )]
     features: Vec<String>,
 }
 
 #[derive(Eq, PartialEq)]
 enum DependencyType {
     Normal,
-    Build,
     Dev,
+    Build,
+}
+
+impl FromStr for DependencyType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "normal" => Ok(DependencyType::Normal),
+            "dev" => Ok(DependencyType::Dev),
+            "build" => Ok(DependencyType::Build),
+            _ => Err(format!("{} is not valid dependency type", s)),
+        }
+    }
 }
 
 enum DependencyCommand {
@@ -35,12 +51,22 @@ struct Opt {
     #[structopt(
         short = "p",
         long,
-        about = "Don't write manifest file just print to stdout"
+        help = "Don't write manifest file just print to stdout"
     )]
     preview: bool,
 
-    #[structopt(short = "i", long, about = "Don't print progress output")]
+    #[structopt(short = "i", long, help = "Don't print progress output")]
     ignore_progress: bool,
+
+    #[structopt(
+        name = "dependency-type",
+        short = "t",
+        long,
+        parse(try_from_str),
+        default_value = "normal",
+        help = "Dependency type you can choose one of `normal`, `dev`, `build`"
+    )]
+    dep_ty: DependencyType,
 
     #[structopt(flatten)]
     command: Command,
@@ -68,31 +94,18 @@ fn try_process_dependency(doc: &mut Document, func: impl Fn(&mut Item, Dependenc
     try_find!("dev-dependencies", DependencyType::Normal);
 }
 
-fn parse_feature(mut feature: &str) -> (DependencyType, DependencyCommand, &str) {
-    let ty = if feature.starts_with(&['+', '-'][..]) {
-        DependencyType::Normal
-    } else {
-        let (ty, other) = feature.split_at(1);
-        feature = other;
-        match ty {
-            "b" => DependencyType::Build,
-            "d" => DependencyType::Dev,
-            "n" => DependencyType::Normal,
-            _ => panic!("Unknown dependenty type: {}", ty),
+fn parse_feature(feature: &str) -> Option<(DependencyCommand, &str)> {
+    let (command, other) = feature.split_at(1);
+    let command = match command {
+        "+" => DependencyCommand::Add,
+        "-" => DependencyCommand::Remove,
+        _ => {
+            eprintln!("Please add `+` or `-` before crate name (e.g. +foo -bar)");
+            return None;
         }
     };
 
-    let command = {
-        let (command, other) = feature.split_at(1);
-        feature = other;
-        match command {
-            "+" => DependencyCommand::Add,
-            "-" => DependencyCommand::Remove,
-            _ => panic!("Unknown command: {}", command),
-        }
-    };
-
-    (ty, command, feature)
+    Some((command, other))
 }
 
 fn find_feature(feature: &str) -> impl Fn(&Value) -> bool + '_ {
@@ -104,6 +117,7 @@ fn main() {
 
     let command = opt.command;
     let ignore_progress = opt.ignore_progress;
+    let target_dep_ty = opt.dep_ty;
 
     let manifest_path = opt
         .manifest_path
@@ -166,13 +180,21 @@ fn main() {
                 .or_insert(Item::Value(Value::Array(Array::default())))
                 .as_array_mut()
         } else {
-            panic!("dependency is unknown type")
+            eprintln!("dependency is not table");
+            return;
         };
 
         let features = features.expect("features array");
 
         for feature in command.features.iter() {
-            let (ty, dep_command, feature) = parse_feature(feature);
+            if dep_ty != target_dep_ty {
+                continue;
+            }
+
+            let (dep_command, feature) = match parse_feature(feature) {
+                Some(x) => x,
+                None => continue,
+            };
 
             if !package.features.contains_key(feature)
                 && !package
@@ -190,10 +212,6 @@ fn main() {
                         feature
                     );
                 }
-                continue;
-            }
-
-            if dep_ty != ty {
                 continue;
             }
 
