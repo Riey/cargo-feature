@@ -10,11 +10,11 @@
 
 ```
 # add serde_derive feature to build-dependency of serde
-cargo feature serde b+serde_derive
+cargo feature serde +serde_derive
 
 # add HtmlDivElement feature to dependency of web_sys 
-cargo feature web_sys n+HtmlDivElement
+cargo feature web_sys +HtmlDivElement
 
 # same as above but remove
-cargo feature web_sys n-HtmlDivElement
+cargo feature web_sys -HtmlDivElement
 ```
