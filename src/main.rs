@@ -108,6 +108,15 @@ fn parse_feature(feature: &str) -> Option<(DependencyCommand, &str)> {
     Some((command, other))
 }
 
+fn normalize_name(name: &str) -> String {
+    name.replace("-", "_")
+}
+
+fn find_package(name: &str) -> impl Fn(&cargo_metadata::Package) -> bool {
+    let name = normalize_name(name);
+    move |package: &cargo_metadata::Package| normalize_name(&package.name) == name 
+}
+
 fn find_feature(feature: &str) -> impl Fn(&Value) -> bool + '_ {
     move |value: &Value| value.as_str() == Some(feature)
 }
@@ -132,10 +141,8 @@ fn main() {
     let package = metadata
         .packages
         .into_iter()
-        .find(|package| package.name == command.krate)
+        .find(find_package(&command.krate))
         .expect("Get package metadata");
-
-    let manifest = std::fs::read_to_string(&manifest_path).expect("Read Cargo.toml");
 
     if command.features.is_empty() {
         println!(
@@ -152,6 +159,8 @@ fn main() {
 
         return;
     }
+
+    let manifest = std::fs::read_to_string(&manifest_path).expect("Read Cargo.toml");
 
     let mut document = Document::from_str(&manifest).expect("Parse Cargo.toml");
 
