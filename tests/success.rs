@@ -1,3 +1,4 @@
+use predicates::prelude::*;
 use assert_cmd::Command;
 
 fn bin() -> Command {
@@ -20,4 +21,11 @@ fn optional_dep() {
     let mut cmd = bin();
     cmd.arg("serde").arg("+derive");
     cmd.assert().success();
+}
+
+#[test]
+fn ui_not_exist() {
+    let mut cmd = bin();
+    cmd.arg("not-exists").arg("+foo");
+    cmd.assert().failure().stderr(predicate::eq("Can't find package from metadata! please check package not-exists is exists in manifest"));
 }
