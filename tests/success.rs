@@ -19,7 +19,7 @@ fn hypen_underline() {
 // https://github.com/Riey/cargo-feature/issues/7
 fn optional_dep() {
     let mut cmd = bin();
-    cmd.arg("serde").arg("@derive");
+    cmd.arg("serde").arg("+derive");
     cmd.assert().success();
 }
 
@@ -27,13 +27,13 @@ fn optional_dep() {
 // https://github.com/Riey/cargo-feature/issues/9
 fn remove_feature() {
     let mut cmd = bin();
-    cmd.arg("web-sys").arg("!HtmlDivElement");
+    cmd.arg("web-sys").arg("^HtmlDivElement");
     cmd.assert().success();
 }
 
 #[test]
 fn ui_not_exist() {
     let mut cmd = bin();
-    cmd.arg("not-exists").arg("@foo");
+    cmd.arg("not-exists").arg("+foo");
     cmd.assert().failure().stderr(predicate::eq("Can't find package from metadata! please check package `not-exists` is exists in manifest\n"));
 }

@@ -13,8 +13,8 @@
 cargo feature serde +serde_derive
 
 # add HtmlDivElement feature to dependency of web_sys 
-cargo feature web_sys @HtmlDivElement
+cargo feature web_sys +HtmlDivElement
 
 # same as above but remove
-cargo feature web_sys !HtmlDivElement
+cargo feature web_sys ^HtmlDivElement
 ```
