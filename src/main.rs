@@ -143,7 +143,7 @@ fn main() {
         .into_iter()
         .find(find_package(&command.krate))
         .unwrap_or_else(|| {
-            eprintln!("Can't find package from metadata! please check package {} is exists in manifest", command.krate);
+            eprintln!("Can't find package from metadata! please check package `{}` is exists in manifest", command.krate);
             std::process::exit(-1);
         });
 
