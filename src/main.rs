@@ -13,7 +13,7 @@ struct Command {
     krate: String,
     #[structopt(
         name = "features",
-        help = "List of features you want to add or remove you must add + or - left of the feature name"
+        help = "List of features you want to add or remove you must add @ or ! left of the feature name"
     )]
     features: Vec<String>,
 }
@@ -97,10 +97,10 @@ fn try_process_dependency(doc: &mut Document, func: impl Fn(&mut Item, Dependenc
 fn parse_feature(feature: &str) -> Option<(DependencyCommand, &str)> {
     let (command, other) = feature.split_at(1);
     let command = match command {
-        "+" => DependencyCommand::Add,
-        "-" => DependencyCommand::Remove,
+        "@" => DependencyCommand::Add,
+        "!" => DependencyCommand::Remove,
         _ => {
-            eprintln!("Please add `+` or `-` before crate name (e.g. +foo -bar)");
+            eprintln!("Please add `@` or `!` before crate name (e.g. @foo !bar)");
             return None;
         }
     };
