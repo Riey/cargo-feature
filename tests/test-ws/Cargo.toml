@@ -11,3 +11,5 @@ edition = "2018"
 serde = { version = "1.0.117", optional = true }
 # issue #6
 show-image = "0.6.4"
+# issue #9
+web-sys = { version = "0.3.45", features = ["HtmlDivElement"] }

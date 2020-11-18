@@ -13,7 +13,7 @@ struct Command {
     krate: String,
     #[structopt(
         name = "features",
-        help = "List of features you want to add or remove you must add + or - left of the feature name"
+        help = "List of features you want to add or remove you must add `+` or `^` left of the feature name"
     )]
     features: Vec<String>,
 }
@@ -98,9 +98,9 @@ fn parse_feature(feature: &str) -> Option<(DependencyCommand, &str)> {
     let (command, other) = feature.split_at(1);
     let command = match command {
         "+" => DependencyCommand::Add,
-        "-" => DependencyCommand::Remove,
+        "^" => DependencyCommand::Remove,
         _ => {
-            eprintln!("Please add `+` or `-` before crate name (e.g. +foo -bar)");
+            eprintln!("Please add `+` or `^` before feature name (e.g. +foo ^bar)");
             return None;
         }
     };
@@ -143,7 +143,7 @@ fn main() {
         .into_iter()
         .find(find_package(&command.krate))
         .unwrap_or_else(|| {
-            eprintln!("Can't find package from metadata! please check package {} is exists in manifest", command.krate);
+            eprintln!("Can't find package from metadata! please check package `{}` is exists in manifest", command.krate);
             std::process::exit(-1);
         });
 
