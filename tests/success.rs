@@ -24,6 +24,14 @@ fn optional_dep() {
 }
 
 #[test]
+// https://github.com/Riey/cargo-feature/issues/12
+fn default_add() {
+    let mut cmd = bin();
+    cmd.arg("serde").arg("derive");
+    cmd.assert().success();
+}
+
+#[test]
 // https://github.com/Riey/cargo-feature/issues/9
 fn remove_feature() {
     let mut cmd = bin();
