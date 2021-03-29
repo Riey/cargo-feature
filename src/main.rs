@@ -94,18 +94,14 @@ fn try_process_dependency(doc: &mut Document, func: impl Fn(&mut Item, Dependenc
     try_find!("dev-dependencies", DependencyType::Normal);
 }
 
-fn parse_feature(feature: &str) -> Option<(DependencyCommand, &str)> {
-    let (command, other) = feature.split_at(1);
-    let command = match command {
-        "+" => DependencyCommand::Add,
-        "^" => DependencyCommand::Remove,
-        _ => {
-            eprintln!("Please add `+` or `^` before feature name (e.g. +foo ^bar)");
-            return None;
-        }
-    };
-
-    Some((command, other))
+fn parse_feature(feature: &str) -> (DependencyCommand, &str) {
+    if let Some(command) = feature.strip_prefix("+") {
+        (DependencyCommand::Add, command)
+    } else if let Some(command) = feature.strip_prefix("^") {
+        (DependencyCommand::Remove, command)
+    } else {
+        (DependencyCommand::Add, feature)
+    }
 }
 
 fn normalize_name(name: &str) -> String {
@@ -203,10 +199,7 @@ fn main() {
                 continue;
             }
 
-            let (dep_command, feature) = match parse_feature(feature) {
-                Some(x) => x,
-                None => continue,
-            };
+            let (dep_command, feature) = parse_feature(feature);
 
             if !package.features.contains_key(feature)
                 && !package
