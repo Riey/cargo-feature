@@ -13,7 +13,7 @@ struct Command {
     krate: String,
     #[structopt(
         name = "features",
-        help = "List of features you want to add or remove you must add `+` or `^` left of the feature name"
+        help = "List of features you want to add or remove you can add `+` or `^` left of the feature name default is `+`"
     )]
     features: Vec<String>,
 }
