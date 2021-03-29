@@ -90,8 +90,26 @@ fn try_process_dependency(doc: &mut Document, func: impl Fn(&mut Item, Dependenc
     }
 
     try_find!("dependencies", DependencyType::Normal);
-    try_find!("build-dependencies", DependencyType::Normal);
-    try_find!("dev-dependencies", DependencyType::Normal);
+    try_find!("build-dependencies", DependencyType::Build);
+    try_find!("dev-dependencies", DependencyType::Dev);
+
+    let item = doc.as_table_mut().entry("target");
+
+    if !item.is_none() {
+        let target = item.as_table_mut().expect("target is not table");
+
+        // There is no iter_mut in Table so just workaround
+        let keys = target.iter().map(|n| n.0.to_string()).collect::<Vec<_>>();
+
+        for key in keys {
+            let deps = target
+                .entry(&key)
+                .as_table_mut()
+                .expect("target.xxx is not table")
+                .entry("dependencies");
+            func(deps, DependencyType::Normal);
+        }
+    }
 }
 
 fn parse_feature(feature: &str) -> (DependencyCommand, &str) {
@@ -110,7 +128,7 @@ fn normalize_name(name: &str) -> String {
 
 fn find_package(name: &str) -> impl Fn(&cargo_metadata::Package) -> bool {
     let name = normalize_name(name);
-    move |package: &cargo_metadata::Package| normalize_name(&package.name) == name 
+    move |package: &cargo_metadata::Package| normalize_name(&package.name) == name
 }
 
 fn find_feature(feature: &str) -> impl Fn(&Value) -> bool + '_ {
@@ -139,7 +157,10 @@ fn main() {
         .into_iter()
         .find(find_package(&command.krate))
         .unwrap_or_else(|| {
-            eprintln!("Can't find package from metadata! please check package `{}` is exists in manifest", command.krate);
+            eprintln!(
+                "Can't find package from metadata! please check package `{}` is exists in manifest",
+                command.krate
+            );
             std::process::exit(-1);
         });
 

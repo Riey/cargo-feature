@@ -1,5 +1,5 @@
-use predicates::prelude::*;
 use assert_cmd::Command;
+use predicates::prelude::*;
 
 fn bin() -> Command {
     let mut cmd = Command::cargo_bin("cargo-feature").unwrap();
@@ -36,6 +36,14 @@ fn default_add() {
 fn remove_feature() {
     let mut cmd = bin();
     cmd.arg("web-sys").arg("^HtmlDivElement");
+    cmd.assert().success();
+}
+
+#[test]
+// https://github.com/Riey/cargo-feature/issues/11
+fn add_target_feature() {
+    let mut cmd = bin();
+    cmd.arg("web-sys").arg("GainOptions");
     cmd.assert().success();
 }
 
