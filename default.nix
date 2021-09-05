@@ -8,11 +8,14 @@
 with pkgs;
 rustPlatform.buildRustPackage rec {
   pname = "cargo-feature";
-  version = "0.5.2";
+  version = "0.6.0";
 
   src = gis.gitIgnoreSource ./.;
 
-  cargoSha256 = "0nvl5smibl81b826xcsrjx8p89lcfpj7wqdsvywnj7jd3p5ag03n";
+  cargoSha256 = "sha256-PmmNCroWC6G7Krm4YQQbMgepuGKS5ZFI49H9D7KOyQc=";
+
+  # dependency error while compile test-ws
+  doCheck = false;
 
   meta = with lib; {
     description = "Allows conveniently modify features of crate";

@@ -2,9 +2,9 @@ use structopt::StructOpt;
 
 use ansi_term::Color;
 use pad::PadStr;
-use std::io::Write;
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::{collections::HashMap, io::Write};
 use toml_edit::{Array, Document, InlineTable, Item, Value};
 
 #[derive(StructOpt)]
@@ -55,8 +55,11 @@ struct Opt {
     )]
     preview: bool,
 
-    #[structopt(short = "i", long, help = "Don't print progress output")]
-    ignore_progress: bool,
+    #[structopt(short = "q", long, help = "Don't print progress output")]
+    quite: bool,
+
+    #[structopt(short = "i", long, help = "Select features interatively")]
+    interactive: bool,
 
     #[structopt(
         name = "dependency-type",
@@ -79,7 +82,7 @@ enum CargoOpt {
     Feature(Opt),
 }
 
-fn try_process_dependency(doc: &mut Document, func: impl Fn(&mut Item, DependencyType)) {
+fn try_process_dependency(doc: &mut Document, mut func: impl FnMut(&mut Item, DependencyType)) {
     macro_rules! try_find {
         ($key:expr, $ty:expr) => {
             let item = doc.as_table_mut().entry($key);
@@ -138,8 +141,9 @@ fn find_feature(feature: &str) -> impl Fn(&Value) -> bool + '_ {
 fn main() {
     let CargoOpt::Feature(opt) = CargoOpt::from_args();
 
-    let command = opt.command;
-    let ignore_progress = opt.ignore_progress;
+    let mut command = opt.command;
+    let quite = opt.quite;
+    let interactive = opt.interactive;
     let target_dep_ty = opt.dep_ty;
 
     let manifest_path = opt
@@ -164,6 +168,122 @@ fn main() {
             std::process::exit(-1);
         });
 
+    let manifest = std::fs::read_to_string(&manifest_path).expect("Read Cargo.toml");
+
+    let mut document = Document::from_str(&manifest).expect("Parse Cargo.toml");
+
+    if interactive {
+        use cursive::align::HAlign;
+        use cursive::event::{Event, Key};
+        use cursive::traits::{Resizable, Scrollable};
+        use cursive::views::*;
+        use cursive::Cursive;
+
+        /// <feature-name, (original-state, changed-state)>
+        type TargetFeatures = HashMap<String, (bool, bool)>;
+
+        let mut target_features = TargetFeatures::new();
+
+        // insert featurse
+        for (feature, _) in package.features.iter() {
+            target_features.insert(feature.clone(), (false, false));
+        }
+
+        // insert optional deps
+        for dep in package.dependencies.iter().filter(|d| d.optional) {
+            target_features.insert(dep.name.clone(), (false, false));
+        }
+
+        try_process_dependency(&mut document, |item, dep_ty| {
+            if dep_ty != target_dep_ty {
+                return;
+            }
+
+            let table = item.as_table_like().expect("dependencies is not table");
+
+            if let Some(dep) = table.get(&command.krate) {
+                if let Some(dep_value) = dep.as_table_like() {
+                    if let Some(features) = dep_value.get("features") {
+                        let features = features.as_array().expect("features is not array");
+
+                        // insert existing features
+                        for feature in features.iter() {
+                            if let Some(feature) = feature.as_str() {
+                                *target_features
+                                    .get_mut(feature)
+                                    .expect("Invalid feature key") = (true, true);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        let mut siv = cursive::crossterm();
+        let mut features_view = LinearLayout::vertical();
+
+        for (feature, (enabled, _)) in target_features.iter() {
+            let feature_inner = feature.clone();
+            features_view.add_child(
+                LinearLayout::horizontal()
+                    .child(
+                        Checkbox::new()
+                            .with_checked(*enabled)
+                            .on_change(move |siv, checked| {
+                                siv.with_user_data(|target_features: &mut TargetFeatures| {
+                                    target_features.get_mut(&feature_inner).unwrap().1 = checked;
+                                });
+                            }),
+                    )
+                    .child(TextView::new(feature)),
+            );
+        }
+
+        siv.set_user_data(target_features);
+
+        siv.add_global_callback('j', |siv| {
+            siv.on_event(Event::Key(Key::Down));
+        });
+
+        siv.add_global_callback('k', |siv| {
+            siv.on_event(Event::Key(Key::Up));
+        });
+
+        siv.add_global_callback('r', Cursive::quit);
+
+        siv.add_layer(
+            Dialog::new()
+                .title(format!("Select features for crate `{}`", command.krate))
+                .content(
+                    LinearLayout::horizontal()
+                        .child(features_view.scrollable())
+                        .child(TextView::new(" j: down, k: up, r: Ok")),
+                )
+                .h_align(HAlign::Center)
+                .button("Ok", Cursive::quit)
+                .full_screen(),
+        );
+
+        siv.run();
+
+        let target_features = siv.take_user_data::<TargetFeatures>().unwrap();
+
+        command.features.clear();
+
+        for (mut feature, (original, changed)) in target_features {
+            if original != changed {
+                feature.insert(0, if changed { '+' } else { '^' });
+
+                command.features.push(feature);
+            }
+        }
+
+        // no change
+        if command.features.is_empty() {
+            return;
+        }
+    }
+
     if command.features.is_empty() {
         println!(
             "{} features for `{}`",
@@ -179,10 +299,6 @@ fn main() {
 
         return;
     }
-
-    let manifest = std::fs::read_to_string(&manifest_path).expect("Read Cargo.toml");
-
-    let mut document = Document::from_str(&manifest).expect("Parse Cargo.toml");
 
     try_process_dependency(&mut document, |item, dep_ty| {
         let dependencies_table = item.as_table_mut().expect("dependencies is not table");
@@ -228,7 +344,7 @@ fn main() {
                     .iter()
                     .any(|x| x.optional && x.name == feature)
             {
-                if !ignore_progress {
+                if !quite {
                     eprintln!(
                         "{} crate `{}` don't have feature `{}`",
                         Color::Yellow.bold().paint(
@@ -245,7 +361,7 @@ fn main() {
             match dep_command {
                 DependencyCommand::Add => {
                     if !features.iter().any(finder) {
-                        if !ignore_progress {
+                        if !quite {
                             println!(
                                 "{} feature `{}` to crate `{}`",
                                 Color::Green.bold().paint(
@@ -263,7 +379,7 @@ fn main() {
                     let pos = features.iter().position(finder);
 
                     if let Some(pos) = pos {
-                        if !ignore_progress {
+                        if !quite {
                             println!(
                                 "{} feature `{}` to crate `{}`",
                                 Color::Green.bold().paint(

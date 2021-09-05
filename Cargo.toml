@@ -1,7 +1,7 @@
 [package]
 name = "cargo-feature"
 description = "Allows conveniently modify features of crate"
-version = "0.5.2"
+version = "0.6.0"
 authors = ["Riey <creeper844@gmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -15,15 +15,9 @@ structopt = "0.3.20"
 toml_edit = "0.2.0"
 ansi_term = "0.12.1"
 pad = "0.1.6"
-cargo_metadata = "0.13.1"
+cargo_metadata = "0.14.0"
+cursive = { version = "0.16.3", default-features = false, features = ["crossterm-backend"] }
 
 [dev-dependencies]
-assert_cmd = "1.0.1"
-predicates = "1.0.5"
-
-[workspace]
-members = [
-    ".",
-    "./tests/test-ws",
-]
-
+assert_cmd = "2.0.0"
+predicates = "2.0.2"
