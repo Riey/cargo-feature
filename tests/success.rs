@@ -40,6 +40,13 @@ fn remove_feature() {
 }
 
 #[test]
+fn disable_default_features() {
+    let mut cmd = bin();
+    cmd.arg("web-sys").arg("^default").arg("--disable-default-features");
+    cmd.assert().success();
+}
+
+#[test]
 // https://github.com/Riey/cargo-feature/issues/11
 fn add_target_feature() {
     let mut cmd = bin();
