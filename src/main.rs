@@ -2,6 +2,7 @@ use structopt::StructOpt;
 
 use ansi_term::Color;
 use pad::PadStr;
+use std::collections::HashSet;
 use std::io::Write;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -67,6 +68,18 @@ struct Opt {
         help = "Dependency type you can choose one of `normal`, `dev`, `build`"
     )]
     dep_ty: DependencyType,
+
+    #[structopt(
+        long,
+        help = "Disable crate's default features same as `cargo feature <crate> ^default` override `enable_default_features`"
+    )]
+    disable_default_features: bool,
+
+    #[structopt(
+        long,
+        help = "Enable crate's default features same as `cargo feature <crate> default`"
+    )]
+    enable_default_features: bool,
 
     #[structopt(flatten)]
     command: Command,
@@ -136,15 +149,39 @@ fn find_feature(feature: &str) -> impl Fn(&Value) -> bool + '_ {
 }
 
 fn main() {
-    let CargoOpt::Feature(opt) = CargoOpt::from_args();
+    let CargoOpt::Feature(Opt {
+        command: Command {
+            features: command_features,
+            krate,
+        },
+        dep_ty: target_dep_ty,
+        mut disable_default_features,
+        mut enable_default_features,
+        ignore_progress,
+        manifest_path,
+        preview,
+    }) = CargoOpt::from_args();
 
-    let command = opt.command;
-    let ignore_progress = opt.ignore_progress;
-    let target_dep_ty = opt.dep_ty;
+    let mut command_features = command_features.into_iter().collect::<HashSet<String>>();
 
-    let manifest_path = opt
-        .manifest_path
-        .unwrap_or_else(|| PathBuf::from_str("Cargo.toml").expect("Cargo.toml path"));
+    if command_features.remove("^default") {
+        disable_default_features = true;
+    }
+
+    if command_features.remove("default") {
+        enable_default_features = true;
+    }
+
+    let default_features = if disable_default_features {
+        false
+    } else {
+        enable_default_features
+    };
+
+    let command_features = command_features;
+
+    let manifest_path =
+        manifest_path.unwrap_or_else(|| PathBuf::from_str("Cargo.toml").expect("Cargo.toml path"));
 
     let metadata = {
         let mut cmd = cargo_metadata::MetadataCommand::new();
@@ -155,22 +192,22 @@ fn main() {
     let package = metadata
         .packages
         .into_iter()
-        .find(find_package(&command.krate))
+        .find(find_package(&krate))
         .unwrap_or_else(|| {
             eprintln!(
                 "Can't find package from metadata! please check package `{}` is exists in manifest",
-                command.krate
+                krate
             );
             std::process::exit(-1);
         });
 
-    if command.features.is_empty() {
+    if command_features.is_empty() && !enable_default_features && !disable_default_features {
         println!(
             "{} features for `{}`",
             Color::Cyan
                 .bold()
                 .paint("Avaliable".pad_to_width_with_alignment(12, pad::Alignment::Right)),
-            command.krate
+            krate
         );
 
         for (feature, sub_features) in package.features {
@@ -187,7 +224,7 @@ fn main() {
     try_process_dependency(&mut document, |item, dep_ty| {
         let dependencies_table = item.as_table_mut().expect("dependencies is not table");
 
-        let dep = dependencies_table.entry(&command.krate);
+        let dep = dependencies_table.entry(&krate);
 
         if dep.is_none() {
             return;
@@ -199,11 +236,25 @@ fn main() {
             *dep.as_value_mut().unwrap() = toml_edit::decorated(table.into(), " ", "");
         }
 
+        const DEFAULT_FEATURES_KEY: &str = "default-features";
+
         let features = if let Some(table) = dep.as_inline_table_mut() {
+            if default_features {
+                table.remove(DEFAULT_FEATURES_KEY);
+            } else {
+                table.get_or_insert(DEFAULT_FEATURES_KEY, false);
+            }
+
             table
                 .get_or_insert("features", Value::Array(Array::default()))
                 .as_array_mut()
         } else if let Some(table) = dep.as_table_mut() {
+            if default_features {
+                table.remove(DEFAULT_FEATURES_KEY);
+            } else {
+                *table.entry(DEFAULT_FEATURES_KEY) = Item::Value(false.into());
+            }
+
             table
                 .entry("features")
                 .or_insert(Item::Value(Value::Array(Array::default())))
@@ -215,7 +266,7 @@ fn main() {
 
         let features = features.expect("features array");
 
-        for feature in command.features.iter() {
+        for feature in command_features.iter() {
             if dep_ty != target_dep_ty {
                 continue;
             }
@@ -234,7 +285,7 @@ fn main() {
                         Color::Yellow.bold().paint(
                             "Skipping".pad_to_width_with_alignment(12, pad::Alignment::Right)
                         ),
-                        command.krate,
+                        krate,
                         feature
                     );
                 }
@@ -252,7 +303,7 @@ fn main() {
                                     "Adding".pad_to_width_with_alignment(12, pad::Alignment::Right)
                                 ),
                                 feature,
-                                command.krate
+                                krate
                             );
                         }
                         features.push(feature).expect("different type found");
@@ -271,7 +322,7 @@ fn main() {
                                         .pad_to_width_with_alignment(12, pad::Alignment::Right)
                                 ),
                                 feature,
-                                command.krate
+                                krate
                             );
                         }
                         features.remove(pos);
@@ -300,7 +351,7 @@ fn main() {
         }
     });
 
-    if opt.preview {
+    if preview {
         println!("{}", document);
     } else {
         let mut file = std::fs::File::create(manifest_path).expect("Create manifest");

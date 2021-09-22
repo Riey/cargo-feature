@@ -12,6 +12,18 @@
 # add serde_derive feature to build-dependency of serde
 cargo feature -t build serde +serde_derive
 
+# disable default-features
+cargo feature serde ^default
+
+# same as above but more explict
+cargo feature serde --disable-default-features
+
+# enable default-features
+cargo feature serde default
+
+# same as above but more explict
+cargo feature serde --enable-default-features
+
 # add HtmlDivElement feature to dependency of web_sys 
 cargo feature web_sys +HtmlDivElement
 
