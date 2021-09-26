@@ -11,7 +11,7 @@ fn bin() -> Command {
 // https://github.com/Riey/cargo-feature/issues/6
 fn hypen_underline() {
     let mut cmd = bin();
-    cmd.arg("show_image");
+    cmd.arg("test_lib");
     cmd.assert().success();
 }
 
@@ -19,7 +19,7 @@ fn hypen_underline() {
 // https://github.com/Riey/cargo-feature/issues/7
 fn optional_dep() {
     let mut cmd = bin();
-    cmd.arg("serde").arg("+derive");
+    cmd.arg("test-lib-dep").arg("+test-lib");
     cmd.assert().success();
 }
 
@@ -27,7 +27,7 @@ fn optional_dep() {
 // https://github.com/Riey/cargo-feature/issues/12
 fn default_add() {
     let mut cmd = bin();
-    cmd.arg("serde").arg("derive");
+    cmd.arg("test-lib").arg("foo");
     cmd.assert().success();
 }
 
@@ -35,14 +35,16 @@ fn default_add() {
 // https://github.com/Riey/cargo-feature/issues/9
 fn remove_feature() {
     let mut cmd = bin();
-    cmd.arg("web-sys").arg("^HtmlDivElement");
+    cmd.arg("test-lib").arg("^bar");
     cmd.assert().success();
 }
 
 #[test]
 fn disable_default_features() {
     let mut cmd = bin();
-    cmd.arg("web-sys").arg("^default").arg("--disable-default-features");
+    cmd.arg("test-lib")
+        .arg("^default")
+        .arg("--disable-default-features");
     cmd.assert().success();
 }
 
@@ -50,7 +52,7 @@ fn disable_default_features() {
 // https://github.com/Riey/cargo-feature/issues/11
 fn add_target_feature() {
     let mut cmd = bin();
-    cmd.arg("web-sys").arg("GainOptions");
+    cmd.arg("test-lib-dep").arg("test-lib");
     cmd.assert().success();
 }
 
