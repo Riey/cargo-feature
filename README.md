@@ -4,7 +4,17 @@
 
 ## Install
 
+### Cargo
+
 `cargo install cargo-feature`
+
+### NixOS
+
+`nix-env -iA nixos.cargo-feature`
+
+### AUR
+
+`paru -S cargo-feature`
 
 ## Usage
 
