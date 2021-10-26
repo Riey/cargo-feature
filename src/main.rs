@@ -186,9 +186,11 @@ fn main() {
     }
 
     let default_features = if disable_default_features {
-        false
+        Some(false)
+    } else if enable_default_features {
+        Some(true)
     } else {
-        enable_default_features
+        None
     };
 
     let command_features = command_features;
@@ -250,20 +252,24 @@ fn main() {
         const DEFAULT_FEATURES_KEY: &str = "default-features";
 
         let features = if let Some(table) = dep.as_inline_table_mut() {
-            if default_features {
-                table.remove(DEFAULT_FEATURES_KEY);
-            } else {
-                table.get_or_insert(DEFAULT_FEATURES_KEY, false);
+            if let Some(default_features) = default_features {
+                if default_features {
+                    table.remove(DEFAULT_FEATURES_KEY);
+                } else {
+                    table.get_or_insert(DEFAULT_FEATURES_KEY, false);
+                }
             }
 
             table
                 .get_or_insert("features", Value::Array(Array::default()))
                 .as_array_mut()
         } else if let Some(table) = dep.as_table_mut() {
-            if default_features {
-                table.remove(DEFAULT_FEATURES_KEY);
-            } else {
-                table.insert(DEFAULT_FEATURES_KEY, Item::Value(false.into()));
+            if let Some(default_features) = default_features {
+                if default_features {
+                    table.remove(DEFAULT_FEATURES_KEY);
+                } else {
+                    table.insert(DEFAULT_FEATURES_KEY, Item::Value(false.into()));
+                }
             }
 
             table
@@ -353,8 +359,9 @@ fn main() {
 
         let dep_table = dep.as_table_like().unwrap();
         if dep_table.len() == 1 {
-            let version = dep_table.get("version").unwrap().clone();
-            *dep = version;
+            if let Some(version) = dep_table.get("version") {
+                *dep = version.clone();
+            }
         }
 
         if let Some(table) = dep.as_inline_table_mut() {
@@ -363,7 +370,7 @@ fn main() {
     });
 
     if preview {
-        println!("{}", document);
+        print!("{}", document);
     } else {
         let mut file = std::fs::File::create(manifest_path).expect("Create manifest");
         write!(file, "{}", document).expect("Write manifest");
