@@ -9,7 +9,14 @@ homepage = "https://github.com/Riey/cargo-feature"
 repository = "https://github.com/Riey/cargo-feature"
 documentation = "https://docs.rs/cargo-feature"
 readme = "README.md"
-categories = ["command-line-interface", "cargo-plugins", "development-tools"]
+categories = ["command-line-interface", "development-tools", "development-tools::cargo-plugins"]
+keywords = [
+    "cargo",
+    "cargo-subcommand",
+    "cli",
+    "feature",
+    "crates",
+]
 
 [dependencies]
 structopt = "0.3.20"
