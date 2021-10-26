@@ -215,7 +215,7 @@ fn main() {
         });
 
     if command_features.is_empty() && !enable_default_features && !disable_default_features {
-        println!(
+        eprintln!(
             "{} features for `{}`",
             Color::Cyan
                 .bold()
@@ -308,7 +308,7 @@ fn main() {
                 DependencyCommand::Add => {
                     if !features.iter().any(finder) {
                         if !ignore_progress {
-                            println!(
+                            eprintln!(
                                 "{} feature `{}` to crate `{}`",
                                 Color::Green.bold().paint(
                                     "Adding".pad_to_width_with_alignment(12, pad::Alignment::Right)
@@ -326,7 +326,7 @@ fn main() {
 
                     if let Some(pos) = pos {
                         if !ignore_progress {
-                            println!(
+                            eprintln!(
                                 "{} feature `{}` to crate `{}`",
                                 Color::Green.bold().paint(
                                     "Removing"
