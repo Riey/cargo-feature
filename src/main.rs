@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use std::io::Write;
 use std::path::PathBuf;
 use std::str::FromStr;
-use toml_edit::{Array, Document, InlineTable, Item, Value};
+use toml_edit::{Array, Document, Entry, InlineTable, Item, Value};
 
 #[derive(StructOpt)]
 struct Command {
@@ -92,10 +92,24 @@ enum CargoOpt {
     Feature(Opt),
 }
 
+macro_rules! get_item {
+    ($table:expr, $key:expr, $item:ident) => {
+        let mut $item = match $table.entry($key) {
+            Entry::Occupied(item) => item,
+            Entry::Vacant(_) => return,
+        };
+
+        let $item = $item.get_mut();
+    };
+}
+
 fn try_process_dependency(doc: &mut Document, func: impl Fn(&mut Item, DependencyType)) {
+    let doc = doc.as_table_mut();
+
     macro_rules! try_find {
         ($key:expr, $ty:expr) => {
-            let item = doc.as_table_mut().entry($key);
+            get_item!(doc, $key, item);
+
             if !item.is_none() {
                 func(item, $ty);
             }
@@ -106,20 +120,18 @@ fn try_process_dependency(doc: &mut Document, func: impl Fn(&mut Item, Dependenc
     try_find!("build-dependencies", DependencyType::Build);
     try_find!("dev-dependencies", DependencyType::Dev);
 
-    let item = doc.as_table_mut().entry("target");
+    get_item!(doc, "target", item);
 
     if !item.is_none() {
         let target = item.as_table_mut().expect("target is not table");
 
         // There is no iter_mut in Table so just workaround
-        let keys = target.iter().map(|n| n.0.to_string()).collect::<Vec<_>>();
-
-        for key in keys {
-            let deps = target
-                .entry(&key)
-                .as_table_mut()
-                .expect("target.xxx is not table")
-                .entry("dependencies");
+        for (_key, target_deps) in target.iter_mut() {
+            get_item!(
+                target_deps.as_table_mut().expect("target.xxx is not table"),
+                "dependencies",
+                deps
+            );
             func(deps, DependencyType::Normal);
         }
     }
@@ -225,16 +237,14 @@ fn main() {
     try_process_dependency(&mut document, |item, dep_ty| {
         let dependencies_table = item.as_table_mut().expect("dependencies is not table");
 
-        let dep = dependencies_table.entry(&krate);
-
-        if dep.is_none() {
-            return;
-        }
+        get_item!(dependencies_table, &krate, dep);
 
         if let Some(version) = dep.as_str() {
             let mut table = InlineTable::default();
             table.get_or_insert("version", version.to_string());
-            *dep.as_value_mut().unwrap() = toml_edit::decorated(table.into(), " ", "");
+            table.decor_mut().set_prefix(" ");
+            table.decor_mut().set_suffix("");
+            *dep.as_value_mut().unwrap() = table.into();
         }
 
         const DEFAULT_FEATURES_KEY: &str = "default-features";
@@ -253,7 +263,7 @@ fn main() {
             if default_features {
                 table.remove(DEFAULT_FEATURES_KEY);
             } else {
-                *table.entry(DEFAULT_FEATURES_KEY) = Item::Value(false.into());
+                table.insert(DEFAULT_FEATURES_KEY, Item::Value(false.into()));
             }
 
             table
@@ -307,7 +317,7 @@ fn main() {
                                 krate
                             );
                         }
-                        features.push(feature).expect("different type found");
+                        features.push(feature);
                         features.fmt();
                     }
                 }
