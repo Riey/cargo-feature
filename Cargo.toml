@@ -1,6 +1,6 @@
 [package]
 name = "cargo-feature"
-description = "Allows conveniently modify features of crate"
+description = "Cargo plugin to manage dependency features"
 version = "0.5.4"
 authors = ["Riey <creeper844@gmail.com>"]
 edition = "2018"
@@ -9,6 +9,7 @@ homepage = "https://github.com/Riey/cargo-feature"
 repository = "https://github.com/Riey/cargo-feature"
 documentation = "https://docs.rs/cargo-feature"
 readme = "README.md"
+categories = ["command-line-interface", "cargo-plugins", "development-tools"]
 
 [dependencies]
 structopt = "0.3.20"
