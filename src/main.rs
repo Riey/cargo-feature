@@ -168,7 +168,8 @@ fn main() {
         disable_default_features = true;
     }
 
-    if command_features.remove("default") {
+    // Don't use shortcut `||` here because we need remove both
+    if command_features.remove("default") | command_features.remove("+default") {
         enable_default_features = true;
     }
 
