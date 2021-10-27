@@ -12,10 +12,6 @@
 
 `nix-env -iA nixos.cargo-feature`
 
-### AUR
-
-`paru -S cargo-feature`
-
 ## Usage
 
 ```
