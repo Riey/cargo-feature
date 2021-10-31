@@ -15,7 +15,7 @@ rustPlatform.buildRustPackage rec {
   cargoSha256 = "sha256-dXA0sqvhAXOqoTPwXNUXVWmRsvWq88F+vCEFvb/Wg2w=";
 
   meta = with lib; {
-    description = "Allows conveniently modify features of crate";
+    description = "Cargo plugin to manage dependency features";
     homepage = "https://github.com/Riey/cargo-feature";
     license = licenses.mit;
     platforms = platforms.unix;
