@@ -49,6 +49,9 @@ struct Opt {
     #[structopt(long = "manifest-path", parse(from_os_str))]
     manifest_path: Option<PathBuf>,
 
+    #[structopt(long, help = "Set target platform")]
+    target: Option<String>,
+
     #[structopt(
         short = "p",
         long,
@@ -103,8 +106,21 @@ macro_rules! get_item {
     };
 }
 
-fn try_process_dependency(doc: &mut Document, func: impl Fn(&mut Item, DependencyType)) {
-    let doc = doc.as_table_mut();
+fn get_target_table<'d>(
+    doc: &'d mut toml_edit::Table,
+    target: &str,
+) -> Option<&'d mut toml_edit::Table> {
+    let target_dic = doc.get_mut("target")?.as_table_mut()?;
+
+    target_dic.get_mut(&target)?.as_table_mut()
+}
+
+fn try_process_dependency(
+    doc: &mut Document,
+    target: Option<String>,
+    func: impl Fn(&mut Item, DependencyType),
+) {
+    let mut doc = doc.as_table_mut();
 
     macro_rules! try_find {
         ($key:expr, $ty:expr) => {
@@ -116,25 +132,13 @@ fn try_process_dependency(doc: &mut Document, func: impl Fn(&mut Item, Dependenc
         };
     }
 
+    if let Some(target) = target {
+        doc = get_target_table(doc, &target).expect("Find target table");
+    }
+
     try_find!("dependencies", DependencyType::Normal);
     try_find!("build-dependencies", DependencyType::Build);
     try_find!("dev-dependencies", DependencyType::Dev);
-
-    get_item!(doc, "target", item);
-
-    if !item.is_none() {
-        let target = item.as_table_mut().expect("target is not table");
-
-        // There is no iter_mut in Table so just workaround
-        for (_key, target_deps) in target.iter_mut() {
-            get_item!(
-                target_deps.as_table_mut().expect("target.xxx is not table"),
-                "dependencies",
-                deps
-            );
-            func(deps, DependencyType::Normal);
-        }
-    }
 }
 
 fn parse_feature(feature: &str) -> (DependencyCommand, &str) {
@@ -171,6 +175,7 @@ fn main() {
         mut enable_default_features,
         ignore_progress,
         manifest_path,
+        target,
         preview,
     }) = CargoOpt::from_args();
 
@@ -255,7 +260,7 @@ fn main() {
 
     let mut document = Document::from_str(&manifest).expect("Parse Cargo.toml");
 
-    try_process_dependency(&mut document, |item, dep_ty| {
+    try_process_dependency(&mut document, target, |item, dep_ty| {
         let dependencies_table = item.as_table_mut().expect("dependencies is not table");
 
         get_item!(dependencies_table, &krate, dep);
@@ -308,8 +313,6 @@ fn main() {
             }
 
             let (dep_command, feature) = parse_feature(feature);
-
-            dbg!(feature);
 
             if !package.features.contains_key(feature)
                 && !package

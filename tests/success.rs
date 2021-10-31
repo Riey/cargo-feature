@@ -35,31 +35,12 @@ fn list_optional_deps_as_feature() {
 fn hypen_underline() {
     let mut cmd = bin();
     cmd.arg("test_lib");
-    cmd.assert().success();
-}
-
-#[test]
-// https://github.com/Riey/cargo-feature/issues/7
-fn optional_dep() {
-    let mut cmd = bin();
-    cmd.arg("test-lib-dep").arg("+test-lib");
-    cmd.assert().success().stdout(predicate::str::diff(
-        r#"[package]
-name = "test-ws"
-version = "0.1.0"
-authors = ["Riey <creeper844@gmail.com>"]
-edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-test-lib = { path = "../test-lib", features = ["bar"] }
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-# issue #9, #11
-test-lib-dep = { path = "../test-lib-dep", features = ["test-lib"] }
-"#,
-    ));
+    cmd.assert().success().stdout(predicate::str::diff(format!(
+        "{} = [\"foo\", \"bar\"]\n{} = []\n{} = []\n",
+        Color::Cyan.paint("default"),
+        Color::Green.paint("bar"),
+        Color::Green.paint("foo"),
+    )));
 }
 
 #[test]
@@ -116,15 +97,49 @@ fn disable_default_features() {
     cmd.arg("test-lib")
         .arg("^default")
         .arg("--disable-default-features");
-    cmd.assert().success();
+    cmd.assert().success().stdout(predicate::str::diff(
+        r#"[package]
+name = "test-ws"
+version = "0.1.0"
+authors = ["Riey <creeper844@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+test-lib = { path = "../test-lib", features = ["bar"], default-features = false }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+# issue #9, #11
+test-lib-dep = { path = "../test-lib-dep" }
+"#,
+    ));
 }
 
 #[test]
 // https://github.com/Riey/cargo-feature/issues/11
 fn add_target_feature() {
     let mut cmd = bin();
-    cmd.arg("test-lib-dep").arg("test-lib");
-    cmd.assert().success();
+    cmd.arg("test-lib-dep")
+        .arg("+test-lib")
+        .arg("--target=cfg(target_arch = \"wasm32\")");
+    cmd.assert().success().stdout(predicate::str::diff(
+        r#"[package]
+name = "test-ws"
+version = "0.1.0"
+authors = ["Riey <creeper844@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+test-lib = { path = "../test-lib", features = ["bar"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+# issue #9, #11
+test-lib-dep = { path = "../test-lib-dep", features = ["test-lib"] }
+"#,
+    ));
 }
 
 #[test]
