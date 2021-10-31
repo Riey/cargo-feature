@@ -13,9 +13,9 @@ fn list_features() {
     let mut cmd = bin();
     cmd.arg("test_lib");
     cmd.assert().success().stdout(predicate::str::diff(format!(
-        "{}[]\n{}[\"foo\", \"bar\"]\n{}[]\n",
+        "{} = [\"foo\", \"bar\"]\n{} = []\n{} = []\n",
+        Color::Cyan.paint("default"),
         Color::Green.paint("bar"),
-        Color::Green.paint("default"),
         Color::Green.paint("foo"),
     )));
 }
@@ -25,8 +25,8 @@ fn list_optional_deps_as_feature() {
     let mut cmd = bin();
     cmd.arg("test_lib_dep");
     cmd.assert().success().stdout(predicate::str::diff(format!(
-        "{}[]\n",
-        Color::Green.paint("test-lib"),
+        "{} (optional)\n",
+        Color::Yellow.paint("test-lib"),
     )));
 }
 

@@ -204,7 +204,7 @@ fn main() {
         cmd.exec().expect("Run cargo-metadata")
     };
 
-    let package = metadata
+    let mut package = metadata
         .packages
         .into_iter()
         .find(find_package(&krate))
@@ -225,13 +225,21 @@ fn main() {
             krate
         );
 
-        for (feature, sub_features) in package.features {
-            if feature == "default" {
-                // different color for default
-                println!("{} = {:?}", Color::Cyan.paint(feature), sub_features);
-            } else {
-                println!("{} = {:?}", Color::Green.paint(feature), sub_features);
-            }
+        if let Some(default_sub_features) = package.features.remove("default") {
+            // different color for default
+            println!(
+                "{} = {:?}",
+                Color::Cyan.paint("default"),
+                default_sub_features
+            );
+        }
+
+        let mut features = package.features.into_iter().collect::<Vec<_>>();
+
+        features.sort_by(|l, r| l.0.cmp(&r.0));
+
+        for (feature, sub_features) in features {
+            println!("{} = {:?}", Color::Green.paint(feature), sub_features);
         }
 
         for optional_deps in package.dependencies {
@@ -300,6 +308,8 @@ fn main() {
             }
 
             let (dep_command, feature) = parse_feature(feature);
+
+            dbg!(feature);
 
             if !package.features.contains_key(feature)
                 && !package
