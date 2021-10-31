@@ -80,7 +80,7 @@ struct Opt {
 
     #[structopt(
         long,
-        help = "Enable crate's default features same as `cargo feature <crate> default`"
+        help = "Enable crate's default features same as `cargo feature <crate> +default`"
     )]
     enable_default_features: bool,
 
