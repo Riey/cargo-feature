@@ -8,11 +8,11 @@
 with pkgs;
 rustPlatform.buildRustPackage rec {
   pname = "cargo-feature";
-  version = "0.5.3";
+  version = "0.6.0";
 
   src = gis.gitIgnoreSource ./.;
 
-  cargoSha256 = "sha256-R8OaxlBAkK5YQPejOdLuCMeQlCbPcC/VQm9WHm31v54=";
+  cargoSha256 = "sha256-dXA0sqvhAXOqoTPwXNUXVWmRsvWq88F+vCEFvb/Wg2w=";
 
   meta = with lib; {
     description = "Allows conveniently modify features of crate";
