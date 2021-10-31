@@ -40,7 +40,23 @@ fn hypen_underline() {
 fn optional_dep() {
     let mut cmd = bin();
     cmd.arg("test-lib-dep").arg("+test-lib");
-    cmd.assert().success();
+    cmd.assert().success().stdout(predicate::str::diff(
+        r#"[package]
+name = "test-ws"
+version = "0.1.0"
+authors = ["Riey <creeper844@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+test-lib = { path = "../test-lib", features = ["bar"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+# issue #9, #11
+test-lib-dep = { path = "../test-lib-dep", features = ["test-lib"] }
+"#,
+    ));
 }
 
 #[test]
