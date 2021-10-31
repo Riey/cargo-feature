@@ -8,6 +8,10 @@
 
 `cargo install cargo-feature`
 
+### Arch
+
+`pacman -Syu cargo-feature`
+
 ### NixOS
 
 `nix-env -iA nixos.cargo-feature`
@@ -24,6 +28,9 @@ cargo feature serde ^default
 # same as above but more explict
 cargo feature serde --disable-default-features
 
+# if you want list all features, just type crate name
+cargo feature serde
+
 # enable default-features
 cargo feature serde default
 
@@ -36,6 +43,9 @@ cargo feature web_sys +HtmlDivElement
 # you can skip typing +
 cargo feature web_sys HtmlDivElement
 
-# same as above but remove
+# same as above but use `target.'cfg(target_arch = "wasm32")'.dependencies`
+cargo feature --target="cfg(target_arch = \"wasm32\")" web_sys HtmlDivElement
+
+# use `^` to remove feature
 cargo feature web_sys ^HtmlDivElement
 ```
