@@ -1,3 +1,4 @@
+use ansi_term::Color;
 use assert_cmd::Command;
 use predicates::prelude::*;
 
@@ -5,6 +6,25 @@ fn bin() -> Command {
     let mut cmd = Command::cargo_bin("cargo-feature").unwrap();
     cmd.current_dir("tests/test-ws").arg("feature").arg("-p");
     cmd
+}
+
+#[test]
+fn list_features() {
+    let mut cmd = bin();
+    cmd.arg("test_lib");
+    cmd.assert().success().stdout(predicate::str::diff(format!(
+        "{}[]\n{}[\"foo\", \"bar\"]\n{}[]\n",
+        Color::Green.paint("bar"),
+        Color::Green.paint("default"),
+        Color::Green.paint("foo"),
+    )));
+}
+
+#[test]
+fn list_optional_deps_as_feature() {
+    let mut cmd = bin();
+    cmd.arg("test_lib_dep");
+    cmd.assert().success().stdout(predicate::str::diff(""));
 }
 
 #[test]
