@@ -226,7 +226,18 @@ fn main() {
         );
 
         for (feature, sub_features) in package.features {
-            println!("{}{:?}", Color::Green.paint(feature), sub_features);
+            if feature == "default" {
+                // different color for default
+                println!("{} = {:?}", Color::Cyan.paint(feature), sub_features);
+            } else {
+                println!("{} = {:?}", Color::Green.paint(feature), sub_features);
+            }
+        }
+
+        for optional_deps in package.dependencies {
+            if optional_deps.optional {
+                println!("{} (optional)", Color::Yellow.paint(optional_deps.name));
+            }
         }
 
         return;
