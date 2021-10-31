@@ -3,7 +3,7 @@
 [![Crates.io](https://img.shields.io/crates/v/cargo-feature)](https://crates.io/crates/cargo-feature)
 [![Arch Linux package](https://img.shields.io/archlinux/v/community/x86_64/cargo-feature)](https://archlinux.org/packages/community/x86_64/cargo-feature)
 
-![preview](https://github.com/Riey/cargo-feature/blob/master/preview.png)
+![preview](https://github.com/Riey/cargo-feature/raw/master/preview.png)
 
 ## Install
 
