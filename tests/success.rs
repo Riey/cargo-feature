@@ -24,7 +24,10 @@ fn list_features() {
 fn list_optional_deps_as_feature() {
     let mut cmd = bin();
     cmd.arg("test_lib_dep");
-    cmd.assert().success().stdout(predicate::str::diff(""));
+    cmd.assert().success().stdout(predicate::str::diff(format!(
+        "{}[]\n",
+        Color::Green.paint("test-lib"),
+    )));
 }
 
 #[test]
