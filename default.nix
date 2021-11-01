@@ -1,18 +1,16 @@
 {
   pkgs ? import <nixpkgs> {}, 
-  gis ? import (fetchTarball {
-     url = https://github.com/icetan/nix-git-ignore-source/archive/v1.0.0.tar.gz;
-     sha256 = "1mnpab6x0bnshpp0acddylpa3dslhzd2m1kk3n0k23jqf9ddz57k";
-  }) {},
 }:
 with pkgs;
 rustPlatform.buildRustPackage rec {
   pname = "cargo-feature";
   version = "0.6.0";
 
-  src = gis.gitIgnoreSource ./.;
+  src = ./.;
 
-  cargoSha256 = "sha256-dXA0sqvhAXOqoTPwXNUXVWmRsvWq88F+vCEFvb/Wg2w=";
+  cargoLock = {
+    lockFile = ./Cargo.lock;
+  };
 
   meta = with lib; {
     description = "Cargo plugin to manage dependency features";
