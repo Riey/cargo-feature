@@ -1,5 +1,6 @@
 # cargo-feature
 
+[![CI](https://github.com/Riey/cargo-feature/actions/workflows/ci.yml/badge.svg)](https://github.com/Riey/cargo-feature/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/cargo-feature)](https://crates.io/crates/cargo-feature)
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/cargo-feature.svg)](https://repology.org/project/cargo-feature/versions)
