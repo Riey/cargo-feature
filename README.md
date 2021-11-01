@@ -1,7 +1,8 @@
 # cargo-feature
 
 [![Crates.io](https://img.shields.io/crates/v/cargo-feature)](https://crates.io/crates/cargo-feature)
-[![Arch Linux package](https://img.shields.io/archlinux/v/community/x86_64/cargo-feature)](https://archlinux.org/packages/community/x86_64/cargo-feature)
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/cargo-feature.svg)](https://repology.org/project/cargo-feature/versions)
 
 ![preview](https://github.com/Riey/cargo-feature/raw/master/preview.png)
 
