@@ -46,10 +46,17 @@ enum DependencyCommand {
 
 #[derive(StructOpt)]
 struct Opt {
-    #[structopt(long = "manifest-path", parse(from_os_str), help = "Override manifest path default is `./Cargo.toml`")]
+    #[structopt(
+        long = "manifest-path",
+        parse(from_os_str),
+        help = "Override manifest path default is `./Cargo.toml`"
+    )]
     manifest_path: Option<PathBuf>,
 
-    #[structopt(long, help = "Set target section (e.g. `cfg(target_arch = \"wasm32\")`)")]
+    #[structopt(
+        long,
+        help = "Set target section (e.g. `cfg(target_arch = \"wasm32\")`)"
+    )]
     target: Option<String>,
 
     #[structopt(
@@ -200,8 +207,7 @@ fn main() {
 
     let command_features = command_features;
 
-    let manifest_path =
-        manifest_path.unwrap_or_else(|| PathBuf::from("./Cargo.toml"));
+    let manifest_path = manifest_path.unwrap_or_else(|| PathBuf::from("./Cargo.toml"));
 
     let metadata = {
         let mut cmd = cargo_metadata::MetadataCommand::new();
