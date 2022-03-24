@@ -328,7 +328,7 @@ fn main() {
             {
                 if !ignore_progress {
                     eprintln!(
-                        "{} crate `{}` don't have feature `{}`",
+                        "{} crate `{}` doesn't have feature `{}`",
                         Color::Yellow.bold().paint(
                             "Skipping".pad_to_width_with_alignment(12, pad::Alignment::Right)
                         ),
