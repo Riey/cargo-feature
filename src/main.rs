@@ -255,7 +255,7 @@ fn main() {
         let optional_features = package
             .dependencies
             .into_iter()
-            .filter_map(|d| if d.optional { Some(d.name) } else { None })
+            .filter_map(|d| if d.optional { Some(d.rename.unwrap_or(d.name)) } else { None })
             .collect::<HashSet<_>>();
 
         for (feature, sub_features) in features {
