@@ -1,4 +1,5 @@
 /target
+/.direnv
 /.idea
 result
 result-*
