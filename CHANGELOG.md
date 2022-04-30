@@ -1,3 +1,8 @@
+# 0.7.0
+
+* Support Rust 1.60.0
+* More styling
+
 # 0.6.0
 
 * **Breaking** Add `target` option to set `[target]` section (https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies)
