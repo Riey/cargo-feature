@@ -20,7 +20,7 @@ keywords = [
 
 [dependencies]
 structopt = "0.3.20"
-toml_edit = "0.6.0"
+toml_edit = "0.14.3"
 ansi_term = "0.12.1"
 pad = "0.1.6"
 cargo_metadata = "0.14.0"
