@@ -3,6 +3,7 @@ use structopt::StructOpt;
 use ansi_term::Color;
 use pad::PadStr;
 use std::collections::HashSet;
+use std::fmt;
 use std::io::Write;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -239,9 +240,9 @@ fn main() {
         if let Some(default_sub_features) = package.features.remove("default") {
             // different color for default
             println!(
-                "{} = {:?}",
-                Color::Cyan.paint("default"),
-                default_sub_features
+                "{} = {}",
+                Color::Purple.bold().paint("default"),
+                PaintSlice(&default_sub_features),
             );
         }
 
@@ -262,11 +263,19 @@ fn main() {
                 continue;
             }
 
-            println!("{} = {:?}", Color::Green.paint(feature), sub_features);
+            println!(
+                "{} = {}",
+                Color::Green.bold().paint(feature),
+                PaintSlice(&sub_features),
+            );
         }
 
         for optional_feature in optional_features {
-            println!("{} (optional)", Color::Yellow.bold().paint(optional_feature));
+            println!(
+                "{} {}",
+                Color::Yellow.bold().paint(optional_feature),
+                Color::Yellow.dimmed().paint("(optional)")
+            );
         }
 
         return;
@@ -415,5 +424,36 @@ fn main() {
         let mut file = std::fs::File::create(manifest_path).expect("Create manifest");
         write!(file, "{}", document).expect("Write manifest");
         file.flush().expect("Flush manifest");
+    }
+}
+
+struct PaintSlice<'a>(&'a [String]);
+
+impl fmt::Display for PaintSlice<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use fmt::Write;
+
+        f.write_char('[')?;
+        let mut items = self.0.iter();
+        if let Some(first) = items.next() {
+            write!(
+                f,
+                "{}{}{}",
+                Color::Yellow.paint("\""),
+                Color::Yellow.paint(first),
+                Color::Yellow.paint("\"")
+            )?;
+        }
+        for item in items {
+            write!(
+                f,
+                ", {}{}{}",
+                Color::Yellow.paint("\""),
+                Color::Yellow.paint(item),
+                Color::Yellow.paint("\"")
+            )?;
+        }
+        f.write_char(']')?;
+        Ok(())
     }
 }
