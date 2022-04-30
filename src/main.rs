@@ -435,23 +435,13 @@ impl fmt::Display for PaintSlice<'_> {
 
         f.write_char('[')?;
         let mut items = self.0.iter();
+        let style = Color::Yellow.normal();
+
         if let Some(first) = items.next() {
-            write!(
-                f,
-                "{}{}{}",
-                Color::Yellow.paint("\""),
-                Color::Yellow.paint(first),
-                Color::Yellow.paint("\"")
-            )?;
+            write!(f, "{}\"{}\"{}", style.prefix(), first, style.suffix(),)?;
         }
         for item in items {
-            write!(
-                f,
-                ", {}{}{}",
-                Color::Yellow.paint("\""),
-                Color::Yellow.paint(item),
-                Color::Yellow.paint("\"")
-            )?;
+            write!(f, ", {}\"{}\"{}", style.prefix(), item, style.suffix(),)?;
         }
         f.write_char(']')?;
         Ok(())

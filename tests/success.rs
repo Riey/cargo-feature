@@ -13,10 +13,12 @@ fn list_features() {
     let mut cmd = bin();
     cmd.arg("test_lib");
     cmd.assert().success().stdout(predicate::str::diff(format!(
-        "{} = [\"foo\", \"bar\"]\n{} = []\n{} = []\n",
-        Color::Cyan.paint("default"),
-        Color::Green.paint("bar"),
-        Color::Green.paint("foo"),
+        "{} = [{}, {}]\n{} = []\n{} = []\n",
+        Color::Purple.bold().paint("default"),
+        Color::Yellow.paint("\"foo\""),
+        Color::Yellow.paint("\"bar\""),
+        Color::Green.bold().paint("bar"),
+        Color::Green.bold().paint("foo"),
     )));
 }
 
@@ -25,8 +27,9 @@ fn list_optional_deps_as_feature() {
     let mut cmd = bin();
     cmd.arg("test_lib_dep");
     cmd.assert().success().stdout(predicate::str::diff(format!(
-        "{} (optional)\n",
-        Color::Yellow.paint("test-lib"),
+        "{} {}\n",
+        Color::Yellow.bold().paint("test-lib"),
+        Color::Yellow.dimmed().paint("(optional)"),
     )));
 }
 
@@ -36,10 +39,12 @@ fn hypen_underline() {
     let mut cmd = bin();
     cmd.arg("test_lib");
     cmd.assert().success().stdout(predicate::str::diff(format!(
-        "{} = [\"foo\", \"bar\"]\n{} = []\n{} = []\n",
-        Color::Cyan.paint("default"),
-        Color::Green.paint("bar"),
-        Color::Green.paint("foo"),
+        "{} = [{}, {}]\n{} = []\n{} = []\n",
+        Color::Purple.bold().paint("default"),
+        Color::Yellow.paint("\"foo\""),
+        Color::Yellow.paint("\"bar\""),
+        Color::Green.bold().paint("bar"),
+        Color::Green.bold().paint("foo"),
     )));
 }
 
