@@ -249,14 +249,24 @@ fn main() {
 
         features.sort_by(|l, r| l.0.cmp(&r.0));
 
+        // Since Rust 1.60.0, optional feature is included in feature section but below version is not.
+        // https://github.com/Riey/cargo-feature/issues/26
+        let optional_features = package
+            .dependencies
+            .into_iter()
+            .filter_map(|d| if d.optional { Some(d.name) } else { None })
+            .collect::<HashSet<_>>();
+
         for (feature, sub_features) in features {
+            if optional_features.contains(&feature) {
+                continue;
+            }
+
             println!("{} = {:?}", Color::Green.paint(feature), sub_features);
         }
 
-        for optional_deps in package.dependencies {
-            if optional_deps.optional {
-                println!("{} (optional)", Color::Yellow.paint(optional_deps.name));
-            }
+        for optional_feature in optional_features {
+            println!("{} (optional)", Color::Yellow.bold().paint(optional_feature));
         }
 
         return;
