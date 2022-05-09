@@ -7,3 +7,4 @@ edition = "2018"
 
 [dependencies]
 test-lib = { path = "../test-lib", optional = true }
+test-lib-rename = { path = "../test-lib", package = "test-lib", optional = true }

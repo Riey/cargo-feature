@@ -1,5 +1,6 @@
 /target
 /.direnv
 /.idea
+/tests/*/target
 result
 result-*

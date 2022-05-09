@@ -27,8 +27,10 @@ fn list_optional_deps_as_feature() {
     let mut cmd = bin();
     cmd.arg("test_lib_dep");
     cmd.assert().success().stdout(predicate::str::diff(format!(
-        "{} {}\n",
+        "{} {}\n{} {}\n",
         Color::Yellow.bold().paint("test-lib"),
+        Color::Yellow.dimmed().paint("(optional)"),
+        Color::Yellow.bold().paint("test-lib-rename"),
         Color::Yellow.dimmed().paint("(optional)"),
     )));
 }

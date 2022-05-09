@@ -2,7 +2,7 @@ use structopt::StructOpt;
 
 use ansi_term::Color;
 use pad::PadStr;
-use std::collections::HashSet;
+use std::collections::{HashSet, BTreeSet};
 use std::fmt;
 use std::io::Write;
 use std::path::PathBuf;
@@ -256,7 +256,7 @@ fn main() {
             .dependencies
             .into_iter()
             .filter_map(|d| if d.optional { Some(d.rename.unwrap_or(d.name)) } else { None })
-            .collect::<HashSet<_>>();
+            .collect::<BTreeSet<_>>();
 
         for (feature, sub_features) in features {
             if optional_features.contains(&feature) {
