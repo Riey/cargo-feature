@@ -2,6 +2,7 @@
 
 * Support Rust 1.60.0
 * More styling
+* Support renamed optional package
 
 # 0.6.0
 
