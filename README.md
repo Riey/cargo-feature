@@ -15,7 +15,7 @@
 
 ### Arch
 
-`pacman -Syu cargo-feature`
+`pacman -S cargo-feature`
 
 ### NixOS
 
