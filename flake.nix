@@ -1,5 +1,5 @@
 {
-    description = "erars";
+    description = "cargo-feature";
 
     inputs = {
         nixpkgs.url = github:NixOS/nixpkgs;
@@ -25,7 +25,7 @@
                     };
                     defaultPackage = pkgs.rustPlatform.buildRustPackage rec {
                         pname = "cargo-feature";
-                        version = "0.7.0";
+                        version = "0.7.1";
 
                         src = ./.;
 
