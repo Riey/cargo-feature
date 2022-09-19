@@ -1,3 +1,7 @@
+# Unreleased
+
+* Print `cargo metadata` error message rather than panic #30
+
 # 0.7.0
 
 * Support Rust 1.60.0

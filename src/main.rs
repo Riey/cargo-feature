@@ -213,7 +213,10 @@ fn main() {
     let metadata = {
         let mut cmd = cargo_metadata::MetadataCommand::new();
         cmd.manifest_path(&manifest_path);
-        cmd.exec().expect("Run cargo-metadata")
+        cmd.exec().unwrap_or_else(|err| {
+            eprintln!("{err}",);
+            std::process::exit(-1);
+        })
     };
 
     let mut package = metadata
