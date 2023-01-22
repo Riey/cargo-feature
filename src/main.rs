@@ -236,7 +236,7 @@ fn main() {
             "{} features for `{}`",
             Color::Cyan
                 .bold()
-                .paint("Avaliable".pad_to_width_with_alignment(12, pad::Alignment::Right)),
+                .paint("Available".pad_to_width_with_alignment(12, pad::Alignment::Right)),
             krate
         );
 
